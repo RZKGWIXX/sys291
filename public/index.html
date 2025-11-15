@@ -1,41 +1,33 @@
 <!doctype html>
-<html lang="uk">
+<html>
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>PC Image Launcher — Темний режим</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>PC Image Launcher — Remote</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="container">
+  <div class="wrap">
     <header>
       <h1>PC Image Launcher</h1>
-      <p class="subtitle">Виберіть ПК та відобразіть зображення — або знищіть агента</p>
-      <div style="margin-top:10px">
-        <button id="selfdestructAll" class="danger">Самознищення всіх агентів</button>
-      </div>
+      <p>Картки з'являються коли агент підключений (SSE)</p>
     </header>
     <main>
       <div id="pcs" class="grid"></div>
     </main>
   </div>
-  <template id="card-template">
+  <template id="card">
     <div class="card">
-      <div class="card-top">
-        <div class="pc-name"></div>
-        <div class="pc-status"></div>
-      </div>
-      <div class="card-body">
-        <button class="open-panel">Відкрити панель</button>
-        <div class="panel hidden">
-          <label>Файли на цьому ПК:</label>
-          <select class="file-select"></select>
-          <div style="margin-top:8px">
-            <button class="show-image">Показати картинку</button>
-            <button class="selfdestruct single danger" style="margin-left:8px">Самознищити цей агент</button>
-          </div>
-          <div class="panel-result"></div>
+      <div class="top"><div class="name"></div><div class="status"></div></div>
+      <div class="body">
+        <label>Файли:</label>
+        <select class="files"></select>
+        <div class="controls">
+          <button class="open">Показати картинку</button>
+          <button class="update">Апдейт (URL)</button>
+          <button class="self">Самознищити</button>
         </div>
+        <div class="msg"></div>
       </div>
     </div>
   </template>

