@@ -10,7 +10,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 const PORT = process.env.PORT || 3000;
-const AUTH_TOKEN = process.env.AUTH_TOKEN || 'change_me'; // token agents use to register
+const AUTH_TOKEN = process.env.AUTH_TOKEN || '2321Wixx'; // token agents use to register
 const AGENT_CALL_TOKEN = process.env.AGENT_CALL_TOKEN || AUTH_TOKEN; // token server uses to call agents
 
 const AGENTS_FILE = path.join(__dirname, 'agents.json');
