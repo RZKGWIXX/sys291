@@ -4,7 +4,7 @@ body{background:#071018;color:#e6eef8;font-family:Segoe UI, Roboto; margin:0;pad
 .card{background:#0f1720;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
 .top{display:flex;justify-content:space-between;align-items:center}
 .name{font-weight:700}
-.status{font-size:0.9rem;padding:4px 8px;background:rgba(255,255,255,0.03);border-radius:999px}
+.status{font-size:0.9rem;padding:4px 8px;background:rgba(215, 215, 215, 0.03);border-radius:999px}
 .controls{margin-top:8px;display:flex;gap:8px}
 button{background:#7c3aed;border:0;padding:8px 10px;border-radius:8px;color:white;cursor:pointer}
 button.self{background:#ef4444}
